@@ -1,4 +1,5 @@
-yarn add @whiskeysockets/baileys
+yarn add @whiskeysockets/baileys 
+(https://github.com/WhiskeySockets/Baileys)
 npm i qrcode-terminal
 npm i nodemon
 npm i axios
