@@ -3,6 +3,7 @@ const makeWaSocket = require ('@whiskeysockets/baileys').default;
 const axioss = require('axios');
 
 
+
 async function startSock () {
     const {state, saveCreds} = await useMultiFileAuthState('auth_info');
     const sock = makeWaSocket({
@@ -32,20 +33,22 @@ async function startSock () {
 
         if (!pesan.key.fromMe && m.type === 'notify'){
         // console.log(JSON.stringify(pesan));
-       console.log("Coba 1:"+ pesan.key.remoteJid);
-       console.log("Coba 2:"+ pesan.message.extendedTextMessage.text);
+        //  console.log("Coba 1:"+ pesan.key.remoteJid);
+        // console.log("Coba 2:"+ pesan.message.extendedTextMessage.text);
 
-        await sock.sendMessage(pesan.key.remoteJid, {
-            text: 'Sedang Mencari Data...\nSilahkan Tunggu '+pesan.pushName+' 🙂'
-        })
-
-            if (pesan.key.remoteJid.includes('@s.whatsapp.net')){ //tidak masuk grup WA
-                if (pesan.message.extendedTextMessage.text){
+        if (pesan.message && pesan.message.conversation) {
+            const pesanTeks = pesan.message.conversation; // membuat variabel baru
+            
+            if (pesan.key.remoteJid.includes('@s.whatsapp.net') && pesanTeks.includes('cek ')){ //tidak masuk grup WA
+                    await sock.sendMessage(pesan.key.remoteJid, {
+                        text: 'Silahkan Tunggu *'+pesan.pushName+'* 🙂\nSedang Mencari Data...'
+                            })
                     //cek API dan kirim data
-                    axioss.get("https://script.google.com/macros/s/AKfycbxVMlkkuJC-_LerMsPaWR37ClPbxBZC1kafmkaRT7GEzzzjfN8cQg6DpSVRABl4JyYK/exec?perintah="+pesan.message.extendedTextMessage.text)
+
+                    axioss.get("https://script.google.com/macros/s/AKfycbxNcTaFS3oJCNRseaPsFnai70K8LYBZm47aIT6Lwt9qgr14paPhc62R8rxJzj-SHGhg/exec?perintah="+pesanTeks.replace('cek ','')+"&perintah_nometer="+pesanTeks.replace('cek ',''))
                             .then(async(response) =>{
                                 let str;
-                                console.log(response.data);
+                                //console.log(response.data);
                                 const {success,data,message} = response.data;
                                 if (success == true){
                                     str = `Berikut Data Pelanggan Terdaftar:\nID PELANGGAN : *${data.IDPEL}*
@@ -58,23 +61,25 @@ async function startSock () {
                                         text: str
                                     })
                                 } else if (success == false){
-                                    str = 'MOHON MAAF DATA PELANGGAN *'+pesan.message.extendedTextMessage.text+'* TIDAK DITEMUKAN, HARAP HUBUNGI PIC DI NOMOR *081200121301* \nTERIMA KASIH 😊'
                                     await sock.sendMessage(pesan.key.remoteJid,{
-                                        text: str
+                                        text: '⚠️ MAAF, DATA "*'+pesanTeks.replace('cek ','')+'*" TIDAK DITEMUKAN⚠️\n\nUNTUK BANTUAN LEBIH LANJUT, SILAKAN HUBUNGI PIC KAMI DI NOMOR *081200121301*\n\nKAMI SIAP MEMBANTU ANDA !'
                                     })
                                 }
                             });
-                }else{
-                    await sock.sendMessage(pesan.key.remoteJid, {
-                        text: 'Selamat datang di Layanan PLN.\n\nSilahkan ketik "cek status" untuk cek ID_Pelanggan anda.'
-                        
-                    })
+            } else if (pesan.key.remoteJid.includes('@s.whatsapp.net') && pesanTeks.includes('info'))
+                {
+                        await sock.sendMessage(pesan.key.remoteJid,{
+                            text: `🌟 Selamat Datang di Layanan Pelanggan Kami! 🌟\nKami siap membantu Anda dengan informasi yang Anda butuhkan.
+                            \nJika Anda ingin mengecek data pelanggan Anda,\nsilakan ketik *"cek (spasi) ID_PELANGGAN/NO_METER"*.
+                            \nContoh : *cek 2938475923*
+                            \nKami akan memberikan informasi mengenai ID Pelanggan atau Nomor Meter Anda.`
+                        })
                 }
-            }
-        }
+          }
+       }
 
         
     });
 }
 
-startSock();
+startSock()
